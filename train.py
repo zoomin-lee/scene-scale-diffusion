@@ -32,7 +32,7 @@ class Experiment(object):
         self.log_path = log_path
 
         if args.dataset =='carla':
-            config_file = os.path.join('/home/jumin/multinomial_diffusion/datasets/carla.yaml')
+            config_file = os.path.join('./carla.yaml')
             carla_config = yaml.safe_load(open(config_file, 'r'))
             self.color_map = carla_config["remap_color_map"]
             self.remap = None
