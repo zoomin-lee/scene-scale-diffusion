@@ -73,13 +73,10 @@ class Vis_iter(object):
     def sample(self):
         self.model.eval()
         with torch.no_grad():
-            for iterate, (voxel_input, point_input, output, counts, grid_ind) in enumerate(self.test_loader):
-                voxel_input = torch.from_numpy(np.asarray(voxel_input)).squeeze(1).cuda() # (4,1,256,256,32)
+            for iterate, (voxel_input, output, counts) in enumerate(self.test_loader):
+                voxel_input = torch.from_numpy(np.asarray(voxel_input)).squeeze(1).cuda() 
                 output = torch.from_numpy(np.asarray(output)).long().cuda()            
-                point = [torch.from_numpy(i).type(torch.FloatTensor).squeeze().cuda() for i in point_input]
-                grid = [torch.from_numpy(i[:,:2]).cuda() for i in grid_ind]
-
-                _, intermediate = self.model.module.sample(voxel_input, point, grid, intermediate=True)
+                _, intermediate = self.model.module.sample(voxel_input, intermediate=True)
                 inter_vis(self.args, intermediate)
                 break
                    
