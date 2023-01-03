@@ -31,16 +31,7 @@ class Experiment(object):
         # Paths
         self.log_path = log_path
 
-        if args.dataset =='kitti':
-            config_file = os.path.join('/home/jumin/multinomial_diffusion/datasets/semantic_kitti.yaml')
-            kitti_config = yaml.safe_load(open(config_file, 'r'))
-            self.remap = kitti_config['learning_map_inv']
-            self.color_map = kitti_config["color_map"]
-            label = kitti_config['labels']
-            map_index = np.asarray([self.remap[i] for i in range(20)])
-            self.label_to_names = np.asarray([label[map_i] for map_i in map_index])
-
-        elif args.dataset =='carla':
+        if args.dataset =='carla':
             config_file = os.path.join('/home/jumin/multinomial_diffusion/datasets/carla.yaml')
             carla_config = yaml.safe_load(open(config_file, 'r'))
             self.color_map = carla_config["remap_color_map"]
