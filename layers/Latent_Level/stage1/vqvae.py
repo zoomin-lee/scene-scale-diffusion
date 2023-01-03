@@ -12,10 +12,7 @@ class vqvae(torch.nn.Module):
         super(vqvae, self).__init__()
         self.args = args
 
-        if self.args.dataset == 'kitti':
-            init_size = args.init_size
-        elif self.args.dataset == 'carla':
-            init_size = args.init_size
+        init_size = args.init_size
         embedding_dim = self.args.num_classes
         
         self.VQ = VectorQuantizer(num_embeddings = self.args.num_classes*self.args.vq_size, embedding_dim = embedding_dim)
@@ -32,7 +29,7 @@ class vqvae(torch.nn.Module):
         return self.encoder.device
 
     def encode(self, x):
-        latent = self.encoder(x) # latent : 8, 128, 8, 8, 2
+        latent = self.encoder(x) 
         latent = self.quant_conv(latent)
         return latent
 
@@ -46,11 +43,11 @@ class vqvae(torch.nn.Module):
 
     def decode(self, quantized_latent):
         quantized_latent = self.post_quant_conv(quantized_latent)
-        recons = self.decoder(quantized_latent) # recons : 8, 11, 128, 128, 8
+        recons = self.decoder(quantized_latent)
         return recons
 
     def forward(self, x, input_ten):
-        latent = self.encode(x) # (4, 11, 32, 32, 2)
+        latent = self.encode(x) 
         quantized_latent, vq_loss, _, _ = self.vector_quantize(latent) 
         recons = self.decode(quantized_latent)
 
