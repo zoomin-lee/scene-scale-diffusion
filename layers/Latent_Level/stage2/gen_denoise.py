@@ -69,19 +69,19 @@ class Asymmetric_Residual_Block(nn.Module):
         
         x = self.GroupNorm(x) * (1 + scale) + shift
 
-        shortcut = self.conv1(x) # shortcut : (2, 8, 256, 256, 32) / down1 : (2, 16, 256, 256, 32)
+        shortcut = self.conv1(x)
         shortcut = self.act1(shortcut)
         shortcut = self.bn0(shortcut)
 
-        shortcut = self.conv1_2(shortcut) # shortcut : (2, 8, 256, 256, 32)
+        shortcut = self.conv1_2(shortcut)
         shortcut = self.act1_2(shortcut)
         shortcut = self.bn0_2(shortcut)
 
-        resA = self.conv2(x) # resA : (2, 8, 256, 256, 32) / down1 : (2, 16, 256, 256, 32)
+        resA = self.conv2(x) 
         resA = self.act2(resA)
         resA = self.bn1(resA)
 
-        resA = self.conv3(resA) # resA : (2, 8, 256, 256, 32) / down1 : (2, 16, 256, 256, 32)
+        resA = self.conv3(resA)
         resA = self.act3(resA)
         resA = self.bn2(resA)
         resA += shortcut
@@ -192,9 +192,8 @@ class DownBlock(nn.Module):
 
     def forward(self, x, t):
         resA = self.residual_block(x, t)
-        #down1 : (2, 16, 256, 256, 32) / down2 : (2, 32, 128, 128, 16) / down3 : (2, 64, 64, 64, 8) / down4 : (2, 128, 32, 32, 8)
         if self.pooling:
-            resB = self.pool(resA) #down1 : (2, 16, 128, 128, 16) / down2 : (2, 32, 64, 64, 8) / down3 : (2, 64, 32, 32, 8) / down4 : (2, 128, 16, 16, 8)
+            resB = self.pool(resA) 
             return resB, resA
         else:
             return resA
@@ -229,8 +228,8 @@ class UpBlock(nn.Module):
             self.up_subm = nn.ConvTranspose3d(in_filters, in_filters, kernel_size=(3,3,1), bias=False, stride=(2,2,1), padding=(1,1,0), output_padding=(1,1,0), dilation=1)
     
 
-    def forward(self, x, residual, t): # x : ( 2, 128, 32, 32, 2 ), skip : ( 2, 128, 64, 64, 4 )
-        upA = self.trans_dilao(x) # upA : ( 2, 128, 32, 32, 2 )
+    def forward(self, x, residual, t):
+        upA = self.trans_dilao(x) 
         upA = self.trans_act(upA)
 
         t = self.time_layers(t)
@@ -295,13 +294,9 @@ class Denoise(nn.Module):
 
         self.embedding = nn.Embedding(self.num_class, init_size)
         self.conv_in = nn.Conv3d(self.num_class, init_size, kernel_size=1, stride=1)
-        #self.conv_in = nn.Conv3d(128, init_size, kernel_size=1, stride=1)
 
         self.A = Asymmetric_Residual_Block(init_size, init_size)
 
-        #self.A = Asymmetric_Residual_Block(init_size*2, init_size*2)
-
-        #self.midBlock1_1 = Asymmetric_Residual_Block(2 * init_size, 2 * init_size)
         self.midBlock1_1 = Asymmetric_Residual_Block(init_size, 2 * init_size)
         self.attention1 = Attention(2 * init_size, 4)
         self.midBlock1_2 = Asymmetric_Residual_Block(2 * init_size, 2 * init_size)
@@ -326,46 +321,32 @@ class Denoise(nn.Module):
             nn.Conv3d(2 * init_size, self.num_class, kernel_size=3, stride=1, padding=1, bias=True),
         )
 
-    #def forward(self, x, x_cond, t):
     def forward(self, x, t):
-        #x_in = x_in.permute(0,2,3,1)
-        if self.discrete :
-            x = self.embedding(x)
-            x = x.permute(0, 4, 1, 2, 3)
-        else : 
-            x = self.conv_in(x)
-
-        '''x_cond = self.embedding(x_cond)
-        x_cond = x_cond.permute(0, 4, 1, 2, 3)
-        x = torch.cat([x, x_cond], dim=1)'''
-
+        x = self.conv_in(x)
         t = self.time_embed(timestep_embedding(t, self.init_size))
 
-        # x : (2, 8, 256, 256, 32)
         ret = self.A(x, t)
 
         mid1 = self.midBlock1_1(ret, t)
         att = self.attention1(mid1)
         mid2 = self.midBlock1_2(att, t)
 
-        down1c, down1b = self.downBlock2(mid2, t) # down1c : (4, 128, 64, 64, 4) , down1b : (4, 64, 128, 128,)
-        down2c, down2b = self.downBlock3(down1c, t) # down2c : (4, 128, 32, 32, 2) , down2b : (4, 128, 64, 64, 4)
+        down1c, down1b = self.downBlock2(mid2, t) 
+        down2c, down2b = self.downBlock3(down1c, t) 
 
-        d_mid2 = self.midBlock2_1(down2c, t) # (4, 128, 32, 32, 2)
+        d_mid2 = self.midBlock2_1(down2c, t) 
         d_att = self.attention2(d_mid2)
-        d_mid1 = self.midBlock2_2(d_att, t) # (4, 128, 32, 32, 2)
+        d_mid1 = self.midBlock2_2(d_att, t) 
 
         up3e = self.upBlock0(d_mid1, down2b, t)
         up2e = self.upBlock1(up3e, down1b, t)
 
-        u_mid2 = self.midBlock3_1(up2e, t) # (4, 128, 32, 32, 2)
+        u_mid2 = self.midBlock3_1(up2e, t) 
         u_att = self.attention3(u_mid2)
-        u_mid1 = self.midBlock3_2(u_att, t) # (4, 128, 32, 32, 2)
+        u_mid1 = self.midBlock3_2(u_att, t) 
 
-        up0e = self.DDCM(u_mid1) # up0e : (2, 16, 256, 256, 32)
-
-        up0e = torch.cat((up0e, up2e), 1) # up0e : (2, 32, 256, 256, 32)
-
-        logits = self.logits(up0e) # logits : (2, 20, 256, 256, 32)
+        up0e = self.DDCM(u_mid1) 
+        up0e = torch.cat((up0e, up2e), 1) 
+        logits = self.logits(up0e) 
         
         return logits
