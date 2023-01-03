@@ -58,19 +58,19 @@ class Asymmetric_Residual_Block(nn.Module):
 
 
     def forward(self, x):
-        shortcut = self.conv1(x) # shortcut : (2, 8, 256, 256, 32) / down1 : (2, 16, 256, 256, 32)
+        shortcut = self.conv1(x)
         shortcut = self.act1(shortcut)
         shortcut = self.bn0(shortcut)
 
-        shortcut = self.conv1_2(shortcut) # shortcut : (2, 8, 256, 256, 32)
+        shortcut = self.conv1_2(shortcut)
         shortcut = self.act1_2(shortcut)
         shortcut = self.bn0_2(shortcut)
 
-        resA = self.conv2(x) # resA : (2, 8, 256, 256, 32) / down1 : (2, 16, 256, 256, 32)
+        resA = self.conv2(x) 
         resA = self.act2(resA)
         resA = self.bn1(resA)
 
-        resA = self.conv3(resA) # resA : (2, 8, 256, 256, 32) / down1 : (2, 16, 256, 256, 32)
+        resA = self.conv3(resA) 
         resA = self.act3(resA)
         resA = self.bn2(resA)
         resA += shortcut
@@ -92,9 +92,8 @@ class DownBlock(nn.Module):
 
     def forward(self, x):
         resA = self.residual_block(x)
-        #down1 : (2, 16, 256, 256, 32) / down2 : (2, 32, 128, 128, 16) / down3 : (2, 64, 64, 64, 8) / down4 : (2, 128, 32, 32, 8)
         if self.pooling:
-            resB = self.pool(resA) #down1 : (2, 16, 128, 128, 16) / down2 : (2, 32, 64, 64, 8) / down3 : (2, 64, 32, 32, 8) / down4 : (2, 128, 16, 16, 8)
+            resB = self.pool(resA) 
             return resB, resA
         else:
             return resA
@@ -257,12 +256,12 @@ class C_Encoder(nn.Module):
         x = x.permute(0, 4, 1, 2, 3)
 
         x = self.A(x)
-        x, down1b = self.downBlock1(x) # down1c : (4, 128, 64, 64, 4) , down1b : (4, 64, 128, 128,)
-        x, down2b = self.downBlock2(x) # down2c : (4, 128, 32, 32, 2) , down2b : (4, 128, 64, 64, 4)
+        x, down1b = self.downBlock1(x)
+        x, down2b = self.downBlock2(x)
 
         if self.l_size == '882':
-            x, down3b = self.downBlock3(x) # down1c : (4, 128, 64, 64, 4) , down1b : (4, 64, 128, 128,)
-            x, down4b = self.downBlock4(x) # down2c : (4, 128, 32, 32, 2) , down2b : (4, 128, 64, 64, 4)
+            x, down3b = self.downBlock3(x)
+            x, down4b = self.downBlock4(x)
         elif self.l_size == '16162':
             x, down3b = self.downBlock3(x)
         
@@ -302,10 +301,8 @@ class C_Decoder(nn.Module):
         self.upBlock3 = UpBlock(8 * init_size, 4 * init_size, height_pooling=False)
         self.upBlock2 = UpBlock(4 * init_size, 2 * init_size, height_pooling=True)
         self.upBlock1 = UpBlock(2 * init_size, 2 * init_size, height_pooling=True)
-
         self.DDCM = DDCM(2 * init_size, 2 * init_size)
         self.logits = nn.Conv3d(4 * init_size, self.nclasses, kernel_size=3, stride=1, padding=1, bias=True)
-
 
     def forward(self, x, in_conv=True):
         if in_conv :
@@ -326,9 +323,9 @@ class C_Decoder(nn.Module):
         x = self.upBlock2(x)
         up1 = self.upBlock1(x)
 
-        up0 = self.DDCM(up1) # up0e : (2, 16, 256, 256, 32)
-        up = torch.cat((up1, up0), 1) # up0e : (2, 32, 256, 256, 32)
-        logits = self.logits(up) # logits : (2, 20, 256, 256, 32)
+        up0 = self.DDCM(up1) 
+        up = torch.cat((up1, up0), 1) 
+        logits = self.logits(up) 
         return logits
 
 class Completion(nn.Module):
@@ -365,22 +362,21 @@ class Completion(nn.Module):
         x = x.permute(0, 4, 1, 2, 3)
 
         x = self.A(x)
-        down1c, down1b = self.downBlock1(x) # down1c : (4, 128, 64, 64, 4) , down1b : (4, 64, 128, 128,)
-        down2c, down2b = self.downBlock2(down1c) # down2c : (4, 128, 32, 32, 2) , down2b : (4, 128, 64, 64, 4)
-        down3c, down3b = self.downBlock3(down2c) # down1c : (4, 128, 64, 64, 4) , down1b : (4, 64, 128, 128,)
-        down4c, down4b = self.downBlock4(down3c) # down2c : (4, 128, 32, 32, 2) , down2b : (4, 128, 64, 64, 4)
+        down1c, down1b = self.downBlock1(x)
+        down2c, down2b = self.downBlock2(down1c) 
+        down3c, down3b = self.downBlock3(down2c)
+        down4c, down4b = self.downBlock4(down3c) 
 
-        down4c = self.midBlock1(down4c) # (4, 128, 32, 32, 2)
+        down4c = self.midBlock1(down4c) 
         down4c = self.attention(down4c)
-        down4c = self.midBlock2(down4c) # (4, 128, 32, 32, 2)
+        down4c = self.midBlock2(down4c) 
         
         up4 = self.upBlock4((down4c, down4b), skip=True)
         up3 = self.upBlock3((up4, down3b), skip=True)
         up2 = self.upBlock2((up3, down2b), skip=True)
         up1 = self.upBlock1((up2, down1b), skip=True)
 
-        up0 = self.DDCM(up1) # up0e : (2, 16, 256, 256, 32)
-        up = torch.cat((up1, up0), 1) # up0e : (2, 32, 256, 256, 32)
-
-        logits = self.logits(up) # logits : (2, 20, 256, 256, 32)
+        up0 = self.DDCM(up1) 
+        up = torch.cat((up1, up0), 1) 
+        logits = self.logits(up) 
         return logits
