@@ -15,4 +15,7 @@ In this paper, we learn a diffusion model to generate 3D data on a scene-scale. 
 ![image](https://github.com/zoomin-lee/scene-scale-diffusion/blob/main/images/3D_scene_generation.png?raw=true)
 
 ### Semantic Scene Completion
+![image](https://github.com/zoomin-lee/scene-scale-diffusion/blob/main/images/table4.PNG?raw=true)
+
+
 ![image](https://github.com/zoomin-lee/scene-scale-diffusion/blob/main/images/semantic_scene_completion.png?raw=true)
