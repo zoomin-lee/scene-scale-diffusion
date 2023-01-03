@@ -69,19 +69,19 @@ class Asymmetric_Residual_Block(nn.Module):
         
         x = self.GroupNorm(x) * (1 + scale) + shift
 
-        shortcut = self.conv1(x) # shortcut : (2, 8, 256, 256, 32) / down1 : (2, 16, 256, 256, 32)
+        shortcut = self.conv1(x) 
         shortcut = self.act1(shortcut)
         shortcut = self.bn0(shortcut)
 
-        shortcut = self.conv1_2(shortcut) # shortcut : (2, 8, 256, 256, 32)
+        shortcut = self.conv1_2(shortcut) 
         shortcut = self.act1_2(shortcut)
         shortcut = self.bn0_2(shortcut)
 
-        resA = self.conv2(x) # resA : (2, 8, 256, 256, 32) / down1 : (2, 16, 256, 256, 32)
+        resA = self.conv2(x)
         resA = self.act2(resA)
         resA = self.bn1(resA)
 
-        resA = self.conv3(resA) # resA : (2, 8, 256, 256, 32) / down1 : (2, 16, 256, 256, 32)
+        resA = self.conv3(resA) 
         resA = self.act3(resA)
         resA = self.bn2(resA)
         resA += shortcut
@@ -116,7 +116,6 @@ class DDCM(nn.Module):
         shortcut3 = self.bn0_3(shortcut3)
         shortcut3 = self.act1_3(shortcut3)
         shortcut = shortcut + shortcut2 + shortcut3
-
         shortcut = shortcut * x
 
         return shortcut
@@ -178,9 +177,7 @@ class DownBlock(nn.Module):
         super(DownBlock, self).__init__()
         self.pooling = pooling
         self.drop_out = drop_out
-
         self.residual_block = Asymmetric_Residual_Block(in_filters, out_filters)
-
 
         if pooling:
             if height_pooling:
@@ -193,9 +190,8 @@ class DownBlock(nn.Module):
 
     def forward(self, x, t):
         resA = self.residual_block(x, t)
-        #down1 : (2, 16, 256, 256, 32) / down2 : (2, 32, 128, 128, 16) / down3 : (2, 64, 64, 64, 8) / down4 : (2, 128, 32, 32, 8)
         if self.pooling:
-            resB = self.pool(resA) #down1 : (2, 16, 128, 128, 16) / down2 : (2, 32, 64, 64, 8) / down3 : (2, 64, 32, 32, 8) / down4 : (2, 128, 16, 16, 8)
+            resB = self.pool(resA) 
             return resB, resA
         else:
             return resA
@@ -230,8 +226,8 @@ class UpBlock(nn.Module):
             self.up_subm = nn.ConvTranspose3d(in_filters, in_filters, kernel_size=(3,3,1), bias=False, stride=(2,2,1), padding=(1,1,0), output_padding=(1,1,0), dilation=1)
     
 
-    def forward(self, x, residual, t): # x : ( 2, 128, 32, 32, 2 ), skip : ( 2, 128, 64, 64, 4 )
-        upA = self.trans_dilao(x) # upA : ( 2, 128, 32, 32, 2 )
+    def forward(self, x, residual, t):
+        upA = self.trans_dilao(x)
         upA = self.trans_act(upA)
 
         t = self.time_layers(t)
@@ -301,28 +297,20 @@ class Denoise(nn.Module):
 
         self.downBlock1 = DownBlock(init_size, 2 * init_size, 0.2, height_pooling=True)
         self.downBlock2 = DownBlock(2 * init_size, 4 * init_size, 0.2, height_pooling=True)
-        if self.args.dataset=='kitti':
-            self.downBlock3 = DownBlock(4 * init_size, 4 * init_size, 0.2, height_pooling=True)
-        else :
-            self.downBlock3 = DownBlock(4 * init_size, 8 * init_size, 0.2, height_pooling=False)
-            self.downBlock4 = DownBlock(8 * init_size, 16 * init_size, 0.2, height_pooling=False)
-            self.midBlock1 = Asymmetric_Residual_Block(16 * init_size, 16 * init_size)
-            self.attention = Attention(16 * init_size, 32)
-            self.midBlock2 = Asymmetric_Residual_Block(16 * init_size, 16 * init_size)
-
-        if self.args.dataset=='kitti':
-            self.upBlock3 = UpBlock(4 * init_size, 4 * init_size, height_pooling=True)
-            self.upBlock1 = UpBlock(2 * init_size, 1 * init_size, height_pooling=True)
-            self.DDCM = DDCM(1 * init_size, 1 * init_size)
-            self.logits = nn.Conv3d(2 * init_size, self.num_class, kernel_size=3, stride=1, padding=1, bias=True)
-        else :        
-            self.upBlock4 = UpBlock(16 * init_size, 8 * init_size, height_pooling=False)
-            self.upBlock3 = UpBlock(8 * init_size, 4 * init_size, height_pooling=False)
-            self.upBlock1 = UpBlock(2 * init_size, 2 * init_size, height_pooling=True)
-            self.DDCM = DDCM(2 * init_size, 2 * init_size)
-            self.logits = nn.Conv3d(4 * init_size, self.num_class, kernel_size=3, stride=1, padding=1, bias=True)
+        self.downBlock3 = DownBlock(4 * init_size, 8 * init_size, 0.2, height_pooling=False)
+        self.downBlock4 = DownBlock(8 * init_size, 16 * init_size, 0.2, height_pooling=False)
+        self.midBlock1 = Asymmetric_Residual_Block(16 * init_size, 16 * init_size)
+        self.attention = Attention(16 * init_size, 32)
+        self.midBlock2 = Asymmetric_Residual_Block(16 * init_size, 16 * init_size)
+        
+        self.upBlock4 = UpBlock(16 * init_size, 8 * init_size, height_pooling=False)
+        self.upBlock3 = UpBlock(8 * init_size, 4 * init_size, height_pooling=False)
+        self.upBlock1 = UpBlock(2 * init_size, 2 * init_size, height_pooling=True)
+        self.DDCM = DDCM(2 * init_size, 2 * init_size)
+        self.logits = nn.Conv3d(4 * init_size, self.num_class, kernel_size=3, stride=1, padding=1, bias=True)
+        
         self.upBlock2 = UpBlock(4 * init_size, 2 * init_size, height_pooling=True)
-    
+ 
 
     def forward(self, x, t):
         x = self.embedding(x)
@@ -331,31 +319,27 @@ class Denoise(nn.Module):
 
         t = self.time_embed(timestep_embedding(t, self.init_size))
 
-        # x : (2, 8, 256, 256, 32)
-        if self.args.dataset == 'carla':
-            x = self.A(x, t)
+        x = self.A(x, t)
 
-        down1c, down1b = self.downBlock1(x, t) # down1c : (4, 128, 64, 64, 4) , down1b : (4, 64, 128, 128,)
-        down2c, down2b = self.downBlock2(down1c, t) # down2c : (4, 128, 32, 32, 2) , down2b : (4, 128, 64, 64, 4)
-        down3c, down3b = self.downBlock3(down2c, t) # down1c : (4, 128, 64, 64, 4) , down1b : (4, 64, 128, 128,)
+        down1c, down1b = self.downBlock1(x, t) 
+        down2c, down2b = self.downBlock2(down1c, t) 
+        down3c, down3b = self.downBlock3(down2c, t) 
         
-        if self.args.dataset == 'carla':
-            down4c, down4b = self.downBlock4(down3c, t) # down2c : (4, 128, 32, 32, 2) , down2b : (4, 128, 64, 64, 4)
-            down4c = self.midBlock1(down4c, t) # (4, 128, 32, 32, 2)
-            down4c = self.attention(down4c)
-            down4c = self.midBlock2(down4c, t) # (4, 128, 32, 32, 2)
-            up4 = self.upBlock4(down4c, down4b, t)
-            up3 = self.upBlock3(up4, down3b, t)
-        else :
-            up3 = self.upBlock3(down3c, down3b, t)
+        down4c, down4b = self.downBlock4(down3c, t) 
+        down4c = self.midBlock1(down4c, t) 
+        down4c = self.attention(down4c)
+        down4c = self.midBlock2(down4c, t) 
+        up4 = self.upBlock4(down4c, down4b, t)
+        up3 = self.upBlock3(up4, down3b, t)
+
 
         up2 = self.upBlock2(up3, down2b, t)
         up1 = self.upBlock1(up2, down1b, t)
 
-        up0 = self.DDCM(up1) # up0e : (2, 16, 256, 256, 32)
+        up0 = self.DDCM(up1) 
 
-        up = torch.cat((up1, up0), 1) # up0e : (2, 32, 256, 256, 32)
+        up = torch.cat((up1, up0), 1)
 
-        logits = self.logits(up) # logits : (2, 20, 256, 256, 32)
+        logits = self.logits(up) 
         
         return logits
