@@ -1,6 +1,6 @@
 # Diffusion Probabilistic Models for Scene-Scale 3D Categorical Data
 
-📌[Paper](https://arxiv.org/)        📌[Model](https://drive.google.com/drive/folders/1iqfql5PjKIMn0a9ucnvud3Q9JdPxKZV3?usp=sharing)
+📌[Paper](http://arxiv.org/abs/2301.00527)        📌[Model](https://drive.google.com/drive/folders/1iqfql5PjKIMn0a9ucnvud3Q9JdPxKZV3?usp=sharing)
 
 <img src=https://user-images.githubusercontent.com/65997635/210204837-3821cb37-6213-4edd-807d-88a8553e224a.png width="480"
   height="300">
