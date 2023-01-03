@@ -14,9 +14,6 @@ from layers.Voxel_Level.Gen_Diffusion import Diffusion
 from layers.Voxel_Level.Con_Diffusion import Con_Diffusion
 
 from layers.Latent_Level.stage1.vqvae import vqvae
-from layers.Latent_Level.stage1.completion import completion
-from layers.Latent_Level.stage1.condition import condition
-from layers.Latent_Level.stage2.Cond_diffusion import cond_latent_diffusion
 from layers.Latent_Level.stage2.Gen_diffusion import latent_diffusion
 
 from layers.Ablation.wo_diffusion import wo_diff
@@ -41,7 +38,7 @@ def get_args():
     parser.add_argument('--dist_url', type=str, default='tcp://127.0.0.1:29500', help='url used to set up distributed training')
     
     # Data params
-    parser.add_argument('--dataset', type=str, default='carla', choices='kitti, carla')
+    parser.add_argument('--dataset', type=str, default='carla', choices='carla')
     # Train params
     parser.add_argument('--batch_size', type=int, default=4)
     parser.add_argument('--num_workers', type=int, default=4)
@@ -52,7 +49,7 @@ def get_args():
     parser.add_argument('--clip_value', type=float, default=None)
     parser.add_argument('--clip_norm', type=float, default=None)
     parser.add_argument('--recon_loss', default=False)
-    parser.add_argument('--mode', default='wo_diff', choices='gen, con, vis, l_vae, l_com, l_con, l_gen, l_diff, wo_diff')
+    parser.add_argument('--mode', default='wo_diff', choices='gen, con, vis, l_vae l_gen, wo_diff')
     parser.add_argument('--l_size', default='32322', choices='882, 16162, 32322')
     parser.add_argument('--init_size', default=8)
     parser.add_argument('--l_attention', default=True)
@@ -76,8 +73,8 @@ def get_args():
     # Train params
     parser.add_argument('--epochs', type=int, default=5000)
     parser.add_argument('--resume', type=str, default=False)
-    parser.add_argument('--resume_path', type=str, default='/home/jumin/multinomial_diffusion/Result/Condition_init32/epoch39.tar')
-    parser.add_argument('--vqvae_path', type=str, default='/home/jumin/multinomial_diffusion/Result/vqvae/vqvae_882_100/epoch29.tar')
+    parser.add_argument('--resume_path', type=str, default='')
+    parser.add_argument('--vqvae_path', type=str, default='')
 
     # Logging params
     parser.add_argument('--eval_every', type=int, default=10)
@@ -85,7 +82,7 @@ def get_args():
     parser.add_argument('--completion_epoch', type=int, default=20)
     parser.add_argument('--log_tb', type=eval, default=True)
     parser.add_argument('--log_home', type=str, default=None)
-    parser.add_argument('--log_path', type=str, default='/home/jumin/multinomial_diffusion/Result/wo_diffusion_init8')
+    parser.add_argument('--log_path', type=str, default='')
 
     args = parser.parse_args()
     return args
@@ -165,7 +162,10 @@ def start(local_rank, args):
             for p in Dense.module.parameters():
                 p.requires_grad = False   
             model = torch.nn.parallel.DistributedDataParallel(model, device_ids=[args.gpu], find_unused_parameters=False)
-
+            
+    ###################
+    ## Visualization ##
+    ###################
     elif args.mode == 'vis':
         model = Con_Diffusion(args, completion_criterion, auxiliary_loss_weight=args.auxiliary_loss_weight).cuda()
         if args.distribution :
