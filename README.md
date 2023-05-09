@@ -43,3 +43,4 @@ If you use open3d, you will be able to easily visualize it.
 ## Acknowledgments
 This project is based on the following codebase.
 - [Multinomial Diffusion](https://github.com/ehoogeboom/multinomial_diffusion/tree/9d907a60536ad793efd6d2a6067b3c3d6ba9fce7)
+- [MotionSC](https://github.com/UMich-CURLY/3DMapping)
