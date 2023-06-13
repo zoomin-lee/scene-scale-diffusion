@@ -27,7 +27,8 @@ In this paper, we learn a diffusion model to generate 3D data on a scene-scale. 
 
 Example for training l_gen mode
   
-  python SSC_train.py --mode l_gen --vq_size 100 --l_size 32322 --init_size 32 --l_attention True --log_path ./result --vqvae_path ./lst_stage.tar
+    python SSC_train.py --mode l_gen --vq_size 100 --l_size 32322 --init_size 32 --l_attention True --log_path ./result --vqvae_path ./lst_stage.tar
+
 
 ### Visualization
 : We save the result to a txt file using the `utils/table.py/visulization` function. 
