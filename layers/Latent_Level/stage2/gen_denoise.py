@@ -293,7 +293,7 @@ class Denoise(nn.Module):
         )
 
         self.embedding = nn.Embedding(self.num_class, init_size)
-        self.conv_in = nn.Conv3d(self.num_class, init_size, kernel_size=1, stride=1)
+        self.conv_in = nn.Conv3d(init_size, init_size, kernel_size=1, stride=1)
 
         self.A = Asymmetric_Residual_Block(init_size, init_size)
 
@@ -322,6 +322,8 @@ class Denoise(nn.Module):
         )
 
     def forward(self, x, t):
+        x = self.embedding(x)
+        x = x.permute(0, 4, 1, 2, 3)
         x = self.conv_in(x)
         t = self.time_embed(timestep_embedding(t, self.init_size))
 
