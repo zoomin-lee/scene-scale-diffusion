@@ -3,7 +3,6 @@ import torch
 import numpy as np
 from torch.utils.data import DataLoader
 from datasets.carla_dataset import *
-from datasets.kitti_dataset import *
 
 dataset_choices = {'carla', 'kitti'}
 
