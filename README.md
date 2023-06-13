@@ -25,6 +25,10 @@ In this paper, we learn a diffusion model to generate 3D data on a scene-scale. 
 - For **Discrete Diffusion Model** : --mode gen/con/vis
 - For **Latent Diffusion Model** : --mode l_vae/l_gen --l_size 882/16162/32322 --init_size 32 --l_attention True --vq_size 100
 
+Example for training l_gen mode
+  
+  python SSC_train.py --mode l_gen --vq_size 100 --l_size 32322 --init_size 32 --l_attention True --log_path ./result --vqvae_path ./lst_stage.tar
+
 ### Visualization
 : We save the result to a txt file using the `utils/table.py/visulization` function. 
 If you use open3d, you will be able to easily visualize it.
@@ -44,3 +48,4 @@ If you use open3d, you will be able to easily visualize it.
 This project is based on the following codebase.
 - [Multinomial Diffusion](https://github.com/ehoogeboom/multinomial_diffusion/tree/9d907a60536ad793efd6d2a6067b3c3d6ba9fce7)
 - [MotionSC](https://github.com/UMich-CURLY/3DMapping)
+- [Cylinder3D](https://github.com/xinge008/Cylinder3D)
