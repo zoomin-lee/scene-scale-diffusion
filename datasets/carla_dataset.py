@@ -6,7 +6,6 @@ import yaml
 import torch
 import numba as nb
 from torch.utils.data import Dataset
-from datasets.kitti_dataset import unpack
 
 config_file = os.path.join('/home/jumin/multinomial_diffusion/datasets/carla.yaml')
 carla_config = yaml.safe_load(open(config_file, 'r'))
