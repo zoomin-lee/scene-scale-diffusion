@@ -120,8 +120,10 @@ class Experiment(object):
             self.optimizer.zero_grad()
             voxel_input = torch.from_numpy(np.asarray(voxel_input)).long().squeeze(1).cuda() # (4,1,256,256,32)
             output = torch.from_numpy(np.asarray(output)).long().cuda()            
-
-            loss = self.model.module(output, voxel_input)
+            if self.args.distribution:
+                loss = self.model.module(output, voxel_input)
+            else : 
+                loss = self.model(output, voxel_input)
             loss.backward()
 
             if self.args.clip_value: torch.nn.utils.clip_grad_value_(self.model.parameters(), self.args.clip_value)
@@ -146,9 +148,10 @@ class Experiment(object):
             for voxel_input, output, counts in self.eval_loader:
                 voxel_input = torch.from_numpy(np.asarray(voxel_input)).long().squeeze(1).cuda() # (4,1,256,256,32)
                 output = torch.from_numpy(np.asarray(output)).long().cuda()            
-
-                loss = self.model.module(output, voxel_input)
-
+                if self.args.distribution:
+                    loss = self.model.module(output, voxel_input)
+                else : 
+                    loss = self.model(output, voxel_input)
                 loss_sum += loss.detach().cpu().item() * len(output)
                 loss_count += len(output)
                 print('Train evaluating. Epoch: {}/{}, Datapoint: {}/{}, Bits/dim: {:.3f}'.format(epoch+1, self.args.epochs, loss_count, len(self.eval_loader.dataset), loss_sum/loss_count), end='\r')
@@ -174,9 +177,15 @@ class Experiment(object):
                     invalid = torch.from_numpy(np.asarray(counts)).cuda()
 
                     if self.args.mode == 'l_vae':
-                        recons = self.model.module.sample(output) 
+                        if self.args.distribution:
+                            recons = self.model.module.sample(output) 
+                        else : 
+                            recons = self.model.sample(output) 
                     else :
-                        recons = self.model.module.sample(voxel_input)      
+                        if self.args.distribution:
+                            recons = self.model.module.sample(voxel_input) 
+                        else : 
+                            recons = self.model.sample(voxel_input)   
 
                     visualization(self.args, recons, voxel_input, output, invalid, iteration = iterate)
                     correct, total, pred_TP, pred_FP, pred_TN, pred_FN, intersection, union = get_result(self.args, invalid, output, recons)
@@ -258,16 +267,25 @@ class Experiment(object):
             f.write(str(metric_table))
 
 
-    def checkpoint_save(self, epoch):        
-        checkpoint = {'current_epoch': self.current_epoch,
-                      'train_metrics': self.train_metrics,
-                      'eval_metrics': self.eval_metrics,
-                      'eval_epochs': self.eval_epochs,
-                      'optimizer': self.optimizer.state_dict(),
-                      'model': self.model.module.state_dict(),
-                      'scheduler_iter': self.scheduler_iter.state_dict() if self.scheduler_iter else None,
-                      'scheduler_epoch': self.scheduler_epoch.state_dict() if self.scheduler_epoch else None,}
-
+    def checkpoint_save(self, epoch):    
+        if self.args.distribution:
+            checkpoint = {'current_epoch': self.current_epoch,
+                          'train_metrics': self.train_metrics,
+                          'eval_metrics': self.eval_metrics,
+                          'eval_epochs': self.eval_epochs,
+                          'optimizer': self.optimizer.state_dict(),
+                          'model': self.model.module.state_dict(),
+                          'scheduler_iter': self.scheduler_iter.state_dict() if self.scheduler_iter else None,
+                          'scheduler_epoch': self.scheduler_epoch.state_dict() if self.scheduler_epoch else None,}
+        else : 
+            checkpoint = {'current_epoch': self.current_epoch,
+                          'train_metrics': self.train_metrics,
+                          'eval_metrics': self.eval_metrics,
+                          'eval_epochs': self.eval_epochs,
+                          'optimizer': self.optimizer.state_dict(),
+                          'model': self.model.state_dict(),
+                          'scheduler_iter': self.scheduler_iter.state_dict() if self.scheduler_iter else None,
+                          'scheduler_epoch': self.scheduler_epoch.state_dict() if self.scheduler_epoch else None,}
         epoch_name = 'epoch{}.tar'.format(epoch)
         torch.save(checkpoint, os.path.join(self.log_path, epoch_name))
 
