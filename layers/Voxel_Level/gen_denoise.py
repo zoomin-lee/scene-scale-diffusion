@@ -38,27 +38,33 @@ def conv1x1(in_planes, out_planes, stride=1):
 class Asymmetric_Residual_Block(nn.Module):
     def __init__(self, in_filters, out_filters, time_filters=128):
         super(Asymmetric_Residual_Block, self).__init__()
-        self.GroupNorm = nn.GroupNorm(32, in_filters)
+        if in_filters < 32 : 
+            n_ng = in_filters
+        else : n_ng =32
+        self.GroupNorm = nn.GroupNorm(n_ng, in_filters)
         self.time_layers = nn.Sequential(
                             nn.SiLU(),
                             nn.Linear(time_filters, in_filters*2)
                         )
 
         self.conv1 = conv1x3x3(in_filters, out_filters)
-        self.bn0 = nn.GroupNorm(32, out_filters)
+        if out_filters < 32 : 
+            n_ng = out_filters
+        else : n_ng =32
+        self.bn0 = nn.GroupNorm(n_ng, out_filters)
         self.act1 = nn.LeakyReLU()
           
         self.conv1_2 = conv3x1x3(out_filters, out_filters)
-        self.bn0_2 = nn.GroupNorm(32, out_filters)
+        self.bn0_2 = nn.GroupNorm(n_ng, out_filters)
         self.act1_2 = nn.LeakyReLU()
 
         self.conv2 = conv3x1x3(in_filters, out_filters)
         self.act2 = nn.LeakyReLU()
-        self.bn1 = nn.GroupNorm(32, out_filters)
+        self.bn1 = nn.GroupNorm(n_ng, out_filters)
 
         self.conv3 = conv1x3x3(out_filters, out_filters)
         self.act3 = nn.LeakyReLU()
-        self.bn2 = nn.GroupNorm(32, out_filters)
+        self.bn2 = nn.GroupNorm(n_ng, out_filters)
 
 
     def forward(self, x, t):
@@ -92,15 +98,18 @@ class DDCM(nn.Module):
     def __init__(self, in_filters, out_filters, kernel_size=(3, 3, 3), stride=1):
         super(DDCM, self).__init__()
         self.conv1 = conv3x1x1(in_filters, out_filters)
-        self.bn0 = nn.GroupNorm(32, out_filters)
+        if out_filters < 32 : 
+            n_ng = out_filters
+        else : n_ng =32
+        self.bn0 = nn.GroupNorm(n_ng, out_filters)
         self.act1 = nn.Sigmoid()
 
         self.conv1_2 = conv1x3x1(in_filters, out_filters)
-        self.bn0_2 = nn.GroupNorm(32, out_filters)
+        self.bn0_2 = nn.GroupNorm(n_ng, out_filters)
         self.act1_2 = nn.Sigmoid()
 
         self.conv1_3 = conv1x1x3(in_filters, out_filters)
-        self.bn0_3 = nn.GroupNorm(32, out_filters)
+        self.bn0_3 = nn.GroupNorm(n_ng, out_filters)
         self.act1_3 = nn.Sigmoid()
 
     def forward(self, x):
@@ -172,12 +181,12 @@ class Cross_Attention(nn.Module):
         return self.to_out(out)
 
 class DownBlock(nn.Module):
-    def __init__(self, in_filters, out_filters, dropout_rate, kernel_size=(3, 3, 3), stride=1,
+    def __init__(self, in_filters, out_filters, time_filters, kernel_size=(3, 3, 3), stride=1,
                  pooling=True, drop_out=True, height_pooling=False):
         super(DownBlock, self).__init__()
         self.pooling = pooling
         self.drop_out = drop_out
-        self.residual_block = Asymmetric_Residual_Block(in_filters, out_filters)
+        self.residual_block = Asymmetric_Residual_Block(in_filters, out_filters, time_filters)
 
         if pooling:
             if height_pooling:
@@ -197,12 +206,15 @@ class DownBlock(nn.Module):
             return resA
 
 class UpBlock(nn.Module):
-    def __init__(self, in_filters, out_filters, height_pooling, time_filters=32*4):
+    def __init__(self, in_filters, out_filters, height_pooling, time_filters):
         super(UpBlock, self).__init__()
         # self.drop_out = drop_out
         self.trans_dilao = conv3x3x3(in_filters, in_filters)
         self.trans_act = nn.LeakyReLU()
-        self.trans_bn = nn.GroupNorm(32, in_filters)
+        if in_filters < 32 : 
+            n_ng = out_filters
+        else : n_ng =32
+        self.trans_bn = nn.GroupNorm(n_ng, in_filters)
         self.time_layers = nn.Sequential(
                             nn.SiLU(),
                             nn.Linear(time_filters, in_filters*2)
@@ -210,15 +222,18 @@ class UpBlock(nn.Module):
 
         self.conv1 = conv1x3x3(in_filters, out_filters)
         self.act1 = nn.LeakyReLU()
-        self.bn1 = nn.GroupNorm(32, out_filters)
+        if out_filters < 32 : 
+            n_ng = out_filters
+        else :n_ng = 32
+        self.bn1 = nn.GroupNorm(n_ng, out_filters)
 
         self.conv2 = conv3x1x3(out_filters, out_filters)
         self.act2 = nn.LeakyReLU()
-        self.bn2 = nn.GroupNorm(32, out_filters)
+        self.bn2 = nn.GroupNorm(n_ng, out_filters)
 
         self.conv3 = conv3x3x3(out_filters, out_filters)
         self.act3 = nn.LeakyReLU()
-        self.bn3 = nn.GroupNorm(32, out_filters)
+        self.bn3 = nn.GroupNorm(n_ng, out_filters)
         
         if height_pooling :
             self.up_subm = nn.ConvTranspose3d(in_filters, in_filters, kernel_size=3, bias=False, stride=2, padding=1, output_padding=1, dilation=1)
@@ -285,31 +300,30 @@ class Denoise(nn.Module):
         self.time_size = init_size*4
 
         self.time_embed = nn.Sequential(
-            nn.Linear(init_size, self.time_size),
+            nn.Linear(self.init_size, self.time_size),
             nn.SiLU(),
             nn.Linear(self.time_size, self.time_size),
         )
 
-        self.embedding = nn.Embedding(self.num_class, init_size)
-        self.conv_in = nn.Conv3d(init_size, init_size, kernel_size=1, stride=1)
+        self.embedding = nn.Embedding(self.num_class, self.init_size)
+        self.conv_in = nn.Conv3d(self.init_size, self.init_size, kernel_size=1, stride=1)
 
-        self.A = Asymmetric_Residual_Block(init_size, init_size)
+        self.A = Asymmetric_Residual_Block(self.init_size, self.init_size, self.time_size)
 
-        self.downBlock1 = DownBlock(init_size, 2 * init_size, 0.2, height_pooling=True)
-        self.downBlock2 = DownBlock(2 * init_size, 4 * init_size, 0.2, height_pooling=True)
-        self.downBlock3 = DownBlock(4 * init_size, 8 * init_size, 0.2, height_pooling=False)
-        self.downBlock4 = DownBlock(8 * init_size, 16 * init_size, 0.2, height_pooling=False)
-        self.midBlock1 = Asymmetric_Residual_Block(16 * init_size, 16 * init_size)
+        self.downBlock1 = DownBlock(init_size, 2 * init_size, self.time_size, height_pooling=True)
+        self.downBlock2 = DownBlock(2 * init_size, 4 * init_size, self.time_size, height_pooling=True)
+        self.downBlock3 = DownBlock(4 * init_size, 8 * init_size, self.time_size, height_pooling=False)
+        self.downBlock4 = DownBlock(8 * init_size, 16 * init_size, self.time_size, height_pooling=False)
+        self.midBlock1 = Asymmetric_Residual_Block(16 * init_size, 16 * init_size, self.time_size)
         self.attention = Attention(16 * init_size, 32)
-        self.midBlock2 = Asymmetric_Residual_Block(16 * init_size, 16 * init_size)
+        self.midBlock2 = Asymmetric_Residual_Block(16 * init_size, 16 * init_size, self.time_size)
         
-        self.upBlock4 = UpBlock(16 * init_size, 8 * init_size, height_pooling=False)
-        self.upBlock3 = UpBlock(8 * init_size, 4 * init_size, height_pooling=False)
-        self.upBlock1 = UpBlock(2 * init_size, 2 * init_size, height_pooling=True)
+        self.upBlock4 = UpBlock(16 * init_size, 8 * init_size, height_pooling=False, time_filters=self.time_size)
+        self.upBlock3 = UpBlock(8 * init_size, 4 * init_size, height_pooling=False, time_filters=self.time_size)
+        self.upBlock2 = UpBlock(4 * init_size, 2 * init_size, height_pooling=True, time_filters=self.time_size)
+        self.upBlock1 = UpBlock(2 * init_size, 2 * init_size, height_pooling=True, time_filters=self.time_size)
         self.DDCM = DDCM(2 * init_size, 2 * init_size)
         self.logits = nn.Conv3d(4 * init_size, self.num_class, kernel_size=3, stride=1, padding=1, bias=True)
-        
-        self.upBlock2 = UpBlock(4 * init_size, 2 * init_size, height_pooling=True)
  
 
     def forward(self, x, t):
