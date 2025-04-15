@@ -66,6 +66,8 @@ def get_data(args):
         dataloader = DataLoader(train_ds, batch_size=args.batch_size, shuffle=(train_sampler is None), sampler=train_sampler, collate_fn=train_ds.collate_fn, num_workers=args.num_workers)
         dataloader_val = DataLoader(val_ds, batch_size=args.batch_size, shuffle=False, sampler=val_sampler, collate_fn=val_ds.collate_fn, num_workers=args.num_workers)
         dataloader_test = DataLoader(test_ds, batch_size=args.batch_size, shuffle=False, collate_fn=test_ds.collate_fn, num_workers=args.num_workers)
+    else:
+        raise NotImplementedError("Wrong `dataset` has come. Other datasets are not supported.")
     
     
     return dataloader, dataloader_val, dataloader_test, args.num_classes, comp_weights, seg_weights, train_sampler
