@@ -51,10 +51,10 @@ def get_args():
     parser.add_argument('--clip_norm', type=float, default=None)
     parser.add_argument('--recon_loss', default=False)
     parser.add_argument('--mode', default='wo_diff', choices='gen, con, vis, l_vae l_gen, wo_diff')
-    parser.add_argument('--l_size', default='32322', choices='882, 16162, 32322')
-    parser.add_argument('--init_size', default=8)
+    parser.add_argument('--l_size', type=int, default=32322, choices=[882, 16162, 32322])
+    parser.add_argument('--init_size', type=int, default=8)
     parser.add_argument('--l_attention', default=True)
-    parser.add_argument('--vq_size', default=50)
+    parser.add_argument('--vq_size', type=int, default=50)
 
     # Model params
     parser.add_argument('--auxiliary_loss_weight', type=int, default=0.0005)
