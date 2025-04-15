@@ -1,3 +1,4 @@
+import os
 import math
 import torch
 import numpy as np
@@ -22,9 +23,9 @@ def get_class_weights(freq):
 def get_data(args):
     assert args.dataset in dataset_choices
     if args.dataset == 'carla':
-        train_dir = "/mnt/ssd1/jm/Cartesian/Train"
-        val_dir = "/mnt/ssd1/jm/Cartesian/Val"
-        test_dir = "/mnt/ssd1/jm/Cartesian/Test"
+        train_dir = os.path.join(args.dataset_dir, "Train")
+        val_dir   = os.path.join(args.dataset_dir, "Val")
+        test_dir  = os.path.join(args.dataset_dir, "Test")
 
         x_dim = 128
         y_dim = 128

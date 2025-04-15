@@ -39,6 +39,7 @@ def get_args():
     
     # Data params
     parser.add_argument('--dataset', type=str, default='carla', choices='carla')
+    parser.add_argument('--dataset_dir', type=str, required=True, help='Path to the dataset directory')
     # Train params
     parser.add_argument('--batch_size', type=int, default=4)
     parser.add_argument('--num_workers', type=int, default=4)
