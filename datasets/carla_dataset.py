@@ -7,7 +7,8 @@ import torch
 import numba as nb
 from torch.utils.data import Dataset
 
-config_file = os.path.join('/home/jumin/multinomial_diffusion/datasets/carla.yaml')
+base_dir = os.path.dirname(__file__)
+config_file = os.path.join(base_dir, 'carla.yaml')
 carla_config = yaml.safe_load(open(config_file, 'r'))
 LABELS_REMAP = carla_config["learning_map"]
 REMAP_FREQUENCIES = carla_config["remap_content"]
