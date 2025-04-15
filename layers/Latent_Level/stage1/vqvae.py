@@ -13,9 +13,9 @@ class vqvae(torch.nn.Module):
         self.args = args
 
         init_size = args.init_size
-        embedding_dim = self.args.num_classes
+        embedding_dim = int(self.args.num_classes)
         
-        self.VQ = VectorQuantizer(num_embeddings = self.args.num_classes*self.args.vq_size, embedding_dim = embedding_dim)
+        self.VQ = VectorQuantizer(num_embeddings = int(self.args.num_classes)*int(self.args.vq_size), embedding_dim = embedding_dim)
 
         self.encoder = C_Encoder(args, nclasses=self.args.num_classes, init_size=init_size, l_size=args.l_size, attention=args.l_attention)
         self.quant_conv = nn.Conv3d(self.args.num_classes, self.args.num_classes, kernel_size=1, stride=1)
