@@ -112,17 +112,17 @@ class CarlaDataset(Dataset):
     
     def points_to_voxels(self, voxel_grid, points, t_i):
         # Valid voxels (make sure to clip)
-        voxels = np.floor((points - self.min_bound) / self.voxel_sizes).astype(np.int)
+        voxels = np.floor((points - self.min_bound) / self.voxel_sizes).astype(np.int32)
         # Clamp to account for any floating point errors
         maxes = np.reshape(self.grid_dims - 1, (1, 3))
         mins = np.zeros_like(maxes)
-        voxels = np.clip(voxels, mins, maxes).astype(np.int)
+        voxels = np.clip(voxels, mins, maxes).astype(np.int32)
         # This line is needed to create a mask with number of points, not just binary occupied
         if self.binary_counts:
             voxel_grid[t_i, voxels[:, 0], voxels[:, 1], voxels[:, 2]] += 1
         else:
             unique_voxels, counts = np.unique(voxels, return_counts=True, axis=0)
-            unique_voxels = unique_voxels.astype(np.int)
+            unique_voxels = unique_voxels.astype(np.int32)
             voxel_grid[t_i, unique_voxels[:, 0], unique_voxels[:, 1], unique_voxels[:, 2]] += counts
         return voxel_grid
 
