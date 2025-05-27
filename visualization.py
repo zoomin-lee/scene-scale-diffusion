@@ -1,4 +1,4 @@
-
+import os
 import open3d as o3d
 import open3d.visualization.gui as gui
 import open3d.visualization.rendering as rendering
@@ -130,7 +130,8 @@ def get_voxel(opt):
         colors = points_colors[:, 0]
 
     if opt.dataset == 'carla' : 
-        config_file = 'C:/Users/jumin/Dataset/carla.yaml'
+        base_dir = os.path.dirname(__file__)
+        config_file = os.path.join(base_dir, 'datasets/carla.yaml')
         config = yaml.safe_load(open(config_file, 'r'))
         color_map = config["remap_color_map"]
     

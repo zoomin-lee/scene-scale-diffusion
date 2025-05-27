@@ -250,6 +250,8 @@ class C_Encoder(nn.Module):
             self.attention = Attention(16 * init_size, 32)
             self.midBlock2 = Asymmetric_Residual_Block(16 * init_size, 16 * init_size)
             self.out = nn.Conv3d(16 * init_size, nclasses, kernel_size=3, stride=1, padding=1,bias=True)
+        else:
+            raise NotImplementedError("Unsupported `l_size` has come")
         
     def forward(self, x, out_conv=True):
         x = self.embedding(x)

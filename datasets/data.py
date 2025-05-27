@@ -1,3 +1,4 @@
+import os
 import math
 import torch
 import numpy as np
@@ -22,9 +23,9 @@ def get_class_weights(freq):
 def get_data(args):
     assert args.dataset in dataset_choices
     if args.dataset == 'carla':
-        train_dir = "/mnt/ssd1/jm/Cartesian/Train"
-        val_dir = "/mnt/ssd1/jm/Cartesian/Val"
-        test_dir = "/mnt/ssd1/jm/Cartesian/Test"
+        train_dir = os.path.join(args.dataset_dir, "Train")
+        val_dir   = os.path.join(args.dataset_dir, "Val")
+        test_dir  = os.path.join(args.dataset_dir, "Test")
 
         x_dim = 128
         y_dim = 128
@@ -66,6 +67,8 @@ def get_data(args):
         dataloader = DataLoader(train_ds, batch_size=args.batch_size, shuffle=(train_sampler is None), sampler=train_sampler, collate_fn=train_ds.collate_fn, num_workers=args.num_workers)
         dataloader_val = DataLoader(val_ds, batch_size=args.batch_size, shuffle=False, sampler=val_sampler, collate_fn=val_ds.collate_fn, num_workers=args.num_workers)
         dataloader_test = DataLoader(test_ds, batch_size=args.batch_size, shuffle=False, collate_fn=test_ds.collate_fn, num_workers=args.num_workers)
+    else:
+        raise NotImplementedError("Wrong `dataset` has come. Other datasets are not supported.")
     
     
     return dataloader, dataloader_val, dataloader_test, args.num_classes, comp_weights, seg_weights, train_sampler
